@@ -15,7 +15,7 @@ Two approaches for **FULL/EMPTY detection** are implemented and compared.
 The FIFO consists of separate Write and Read clock domains connected through FIFO memory.
 
 <p align="center">
-  <img src="images/fifo_architecture.png" width="850">
+  <img src="Images/fifo_architecture.png" width="850">
 </p>
 
 ### Main Blocks
@@ -48,23 +48,23 @@ The FIFO consists of separate Write and Read clock domains connected through FIF
 - Synchronized Gray pointers are compared directly.
 - No Gray-to-Binary conversion is required.
 - FULL detection uses the required inverted MSBs.
-- Results in simpler comparison logic.
+- Provides simpler FULL/EMPTY detection logic.
 
 ---
 
 ## Approach Comparison
 
 <p align="center">
-  <img src="images/fifo_comparison.png" width="850">
+  <img src="Images/fifo_comparison.png" width="850">
 </p>
 
 | Feature | Approach 1 | Approach 2 |
 |---|---|---|
 | Gray-to-Binary conversion | Required | Not required |
-| Additional logic | More | Less |
+| FULL/EMPTY comparison | Binary | Direct Gray |
 | Design complexity | Higher | Lower |
-| Hardware usage | More | Less |
-| Efficiency | Lower | Better |
+| Additional conversion logic | Required | Not required |
+| Implementation | More complex | Simpler |
 
 ---
 
@@ -72,15 +72,14 @@ The FIFO consists of separate Write and Read clock domains connected through FIF
 
 ### Approach 2 – Direct Gray Comparison
 
-Approach 2 is preferred because it:
+Approach 2 is preferred for this design because it:
 
 - Avoids Gray-to-Binary conversion
-- Uses simpler logic
-- Reduces additional hardware
-- Provides a cleaner implementation
-- Is more efficient for FULL/EMPTY detection
+- Simplifies FULL/EMPTY detection
+- Reduces logic stages
+- Provides a cleaner RTL implementation
 
-Both approaches provide the required FIFO functionality, but **Approach 2 offers a simpler implementation**.
+Both approaches were implemented and verified successfully.
 
 ---
 
@@ -96,6 +95,83 @@ Both approaches provide the required FIFO functionality, but **Approach 2 offers
 
 ---
 
+## Simulation Results
+
+Both implementations were simulated using **Xilinx Vivado Simulator**.
+
+### Approach 1 – Simulation
+
+<p align="center">
+  <img src="Images/approach1_waveform.png" width="1000">
+</p>
+
+The waveform verifies FIFO write, read, FULL and EMPTY operations.
+
+### Approach 2 – Simulation
+
+<p align="center">
+  <img src="Images/approach2_waveform.png" width="1000">
+</p>
+
+The waveform verifies FIFO write, read, FULL and EMPTY operations.
+
+---
+
+## Synthesis Results
+
+Both approaches were synthesized using **Xilinx Vivado**.
+
+### Approach 1 – Resource Utilization
+
+<p align="center">
+  <img src="Images/approach1_utilization.png" width="500">
+</p>
+
+### Approach 2 – Resource Utilization
+
+<p align="center">
+  <img src="Images/approach2_utilization.png" width="500">
+</p>
+
+### Resource Comparison
+
+| Resource | Approach 1 | Approach 2 |
+|---|---:|---:|
+| FDRE | 64 | 64 |
+| FDCE | 39 | 39 |
+| LUT6 | 31 | 32 |
+| IBUF | 13 | 13 |
+| OBUF | 10 | 10 |
+| MUXF7 | 8 | 8 |
+| LUT5 | 4 | 6 |
+| LUT4 | 5 | 4 |
+| LUT3 | 4 | 2 |
+| LUT2 | 2 | 1 |
+| BUFG | 2 | 2 |
+| FDPE | 1 | 1 |
+
+The overall resource utilization is **very similar** for both approaches in this small FIFO implementation.
+
+Approach 2 provides its main advantage by eliminating the explicit **Gray-to-Binary conversion** in the FULL/EMPTY detection path.
+
+---
+
+## Verification
+
+The testbenches verify:
+
+- Reset operation
+- FIFO write operation
+- FIFO FULL condition
+- Extra write when FIFO is FULL
+- FIFO read operation
+- FIFO EMPTY condition
+- Extra read when FIFO is EMPTY
+
+Both approaches were verified using independent testbenches.
+
+---
+
 ## Key Concepts
 
 - Asynchronous FIFO
@@ -105,16 +181,18 @@ Both approaches provide the required FIFO functionality, but **Approach 2 offers
 - 2-Flop Synchronizers
 - FULL / EMPTY Detection
 - RTL Design
+- FPGA Synthesis
+- Functional Verification
 
 ---
 
 ## Tools Used
 
-- Verilog HDL
-- Xilinx Vivado
-- Vivado Simulator
-- Git
-- GitHub
+- **Verilog HDL**
+- **Xilinx Vivado**
+- **Vivado Simulator**
+- **Git**
+- **GitHub**
 
 ---
 
@@ -125,15 +203,19 @@ Asynchronous-FIFO-Verilog/
 │
 ├── README.md
 │
-├── rtl/
+├── RTL/
 │   ├── async_fifo_binary.v
 │   └── async_fifo_gray.v
 │
-├── testbench/
+├── Testbench/
 │   ├── tb_async_fifo_binary.v
 │   └── tb_async_fifo_gray.v
 │
-└── images/
+└── Images/
     ├── fifo_architecture.png
     ├── fifo_two_approaches.png
-    └── fifo_comparison.png
+    ├── fifo_comparison.png
+    ├── approach1_waveform.png
+    ├── approach1_utilization.png
+    ├── approach2_waveform.png
+    └── approach2_utilization.png
