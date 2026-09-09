@@ -191,8 +191,6 @@ Both approaches were verified using independent testbenches.
 - **Verilog HDL**
 - **Xilinx Vivado**
 - **Vivado Simulator**
-- **Git**
-- **GitHub**
 
 ---
 
