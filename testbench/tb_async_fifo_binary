@@ -1,0 +1,224 @@
+`timescale 1ns / 1ps
+
+module tb_async_fifo_binary;
+
+    //==========================================================
+    // TESTBENCH SIGNALS
+    //==========================================================
+    reg        wclk;
+    reg        rclk;
+    reg        rst;
+
+    reg [7:0]  din;
+    reg        wr_en;
+    reg        rd_en;
+
+    wire [7:0] dout;
+    wire       fifo_full;
+    wire       fifo_empty;
+
+
+    //==========================================================
+    // DUT
+    //==========================================================
+    async_fifo_binary #(
+        .PTR_WIDTH(4),
+        .ADDR_WIDTH(3)
+    ) DUT (
+        .wclk       (wclk),
+        .rclk       (rclk),
+        .rst        (rst),
+        .din        (din),
+        .wr_en      (wr_en),
+        .rd_en      (rd_en),
+        .dout       (dout),
+        .fifo_full  (fifo_full),
+        .fifo_empty (fifo_empty)
+    );
+
+
+    //==========================================================
+    // WRITE CLOCK
+    // 20 ns period
+    //==========================================================
+    initial begin
+        wclk = 1'b0;
+
+        forever #10 wclk = ~wclk;
+    end
+
+
+    //==========================================================
+    // READ CLOCK
+    // 30 ns period
+    //==========================================================
+    initial begin
+        rclk = 1'b0;
+
+        forever #15 rclk = ~rclk;
+    end
+
+
+    //==========================================================
+    // TEST SEQUENCE
+    //==========================================================
+    initial begin
+
+        // Initial values
+        rst   = 1'b1;
+        din   = 8'h00;
+        wr_en = 1'b0;
+        rd_en = 1'b0;
+
+
+        //======================================================
+        // RESET
+        //======================================================
+        #50;
+
+        rst = 1'b0;
+
+        $display("--------------------------------------");
+        $display("RESET RELEASED");
+        $display("--------------------------------------");
+
+
+        //======================================================
+        // WRITE 8 DATA VALUES
+        //======================================================
+        @(negedge wclk);
+
+        wr_en = 1'b1;
+
+        din = 8'h0A;
+        @(negedge wclk);
+
+        din = 8'h0B;
+        @(negedge wclk);
+
+        din = 8'h0C;
+        @(negedge wclk);
+
+        din = 8'h0D;
+        @(negedge wclk);
+
+        din = 8'h0E;
+        @(negedge wclk);
+
+        din = 8'h0F;
+        @(negedge wclk);
+
+        din = 8'hA0;
+        @(negedge wclk);
+
+        din = 8'hBA;
+        @(negedge wclk);
+
+
+        // Stop writing
+        @(negedge wclk);
+        wr_en = 1'b0;
+        din   = 8'h00;
+
+
+        $display("--------------------------------------");
+        $display("8 DATA VALUES WRITTEN");
+        $display("--------------------------------------");
+
+
+        //======================================================
+        // WAIT FOR FIFO FULL
+        // Because read pointer synchronization takes time
+        //======================================================
+        #100;
+
+        if (fifo_full == 1'b1)
+            $display("PASS: FIFO FULL detected");
+        else
+            $display("FAIL: FIFO FULL not detected");
+
+
+        //======================================================
+        // TRY EXTRA WRITE
+        // FIFO IS FULL, SO THIS WRITE MUST NOT HAPPEN
+        //======================================================
+        @(negedge wclk);
+
+        wr_en = 1'b1;
+        din   = 8'hFF;
+
+        @(negedge wclk);
+
+        wr_en = 1'b0;
+
+        $display("--------------------------------------");
+        $display("EXTRA WRITE ATTEMPTED");
+        $display("FIFO FULL = %b", fifo_full);
+        $display("--------------------------------------");
+
+
+        //======================================================
+        // START READING
+        //======================================================
+        @(negedge rclk);
+
+        rd_en = 1'b1;
+
+
+        // Read 8 values
+        repeat (8) begin
+
+            @(negedge rclk);
+
+            $display("READ DATA = %h", dout);
+
+        end
+
+
+        // Stop reading
+        rd_en = 1'b0;
+
+
+        //======================================================
+        // WAIT FOR EMPTY
+        //======================================================
+        #100;
+
+        if (fifo_empty == 1'b1)
+            $display("PASS: FIFO EMPTY detected");
+        else
+            $display("FAIL: FIFO EMPTY not detected");
+
+
+        //======================================================
+        // TRY EXTRA READ
+        // FIFO IS EMPTY, SO THIS READ MUST NOT HAPPEN
+        //======================================================
+        @(negedge rclk);
+
+        rd_en = 1'b1;
+
+        @(negedge rclk);
+
+        rd_en = 1'b0;
+
+        $display("--------------------------------------");
+        $display("EXTRA READ ATTEMPTED");
+        $display("FIFO EMPTY = %b", fifo_empty);
+        $display("--------------------------------------");
+
+
+        //======================================================
+        // END SIMULATION
+        //======================================================
+        #100;
+
+        $display("--------------------------------------");
+        $display("SIMULATION COMPLETE");
+        $display("--------------------------------------");
+
+        $finish;
+
+    end
+
+endmodule
